@@ -3,7 +3,6 @@ Undistorts all images and stores them in a new dir.
 Author: Aljosa Osep (osep@vision.rwth-aachen.de)
 
 To use:
-
     python undistort_sequences.py /media/osep/NCLT/images /media/osep/NCLT/ladybug3_calib
 """
 
@@ -24,7 +23,7 @@ def main():
     parser.add_argument('map_dir', metavar='map', type=str, help='undistortion maps dir')
     args = parser.parse_args()
 
-    camera_list = ['Cam%d'%x for x in range(6)]
+    camera_list = ['Cam%d'%x for x in range(0, 6)]
 
     # Get all dirs in image dir
     img_dirs_list = os.walk(args.image_dir).next()[1]
@@ -34,7 +33,7 @@ def main():
 
         for cam_name in camera_list:
             print ('Processing cam: %s'%cam_name)
-            map_path = os.path.join(args.map_dir, 'D2U_%s_1616X1232.txt'%cam_name)
+            map_path = os.path.join(args.map_dir, 'U2D_%s_1616X1232.txt'%cam_name)
             undistort = undis.Undistort(map_path)
             print 'Loaded camera calibration'
             curr_dir = os.path.join(args.image_dir, dir_name, 'lb3', cam_name)
@@ -53,7 +52,7 @@ def main():
                 # Save to %IMG_DIR%/undistorted/*.png
                 path_dir, path_name = os.path.split(file)
                 name, ext = os.path.splitext(path_name)
-                dir_out = os.path.join(path_dir, 'undistored')
+                dir_out = os.path.join(path_dir, 'undistorted')
                 if not os.path.exists(dir_out): # Make sure output dir is there
                     os.makedirs(dir_out)
                 path_out = os.path.join(dir_out, '%s.png'%name)
