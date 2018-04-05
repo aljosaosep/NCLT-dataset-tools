@@ -1,8 +1,10 @@
 # !/usr/bin/python
 #
-# Demonstrates how to project velodyne points to camera imagery. Requires a binary
-# velodyne sync file, undistorted image, and assumes that the calibration files are
-# in the directory.
+# Demonstrates how to project velodyne points to camera imagery.
+
+# Requires a binary velodyne sync file (image-synced) , undistorted image and a dir, containing camera calibration files.
+#
+# Provided by NCLT dataset authors, modified by Aljosa Osep (osep@vision.rwth-aachen.de)
 #
 # To use:
 #
@@ -10,7 +12,8 @@
 #
 #       vel:  The velodyne binary file (timestamp.bin)
 #       img:  The undistorted image (timestamp.tiff)
-#   cam_num:  The index (0 through 5) of the camera
+#       calib_dir: Dir containing camera calibration files.
+#       cam_num:  The index (0 through 5) of the camera
 #
 
 import sys
@@ -18,6 +21,7 @@ import struct
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import numpy as np
+import os
 
 #from undistort import *
 
@@ -94,11 +98,11 @@ def ssc_to_homo(ssc):
 
     return H
 
-def project_vel_to_cam(hits, cam_num):
+def project_vel_to_cam(hits, cam_num, calib_dir):
 
     # Load camera parameters
-    K = np.loadtxt('K_cam%d.csv' % (cam_num), delimiter=',')
-    x_lb3_c = np.loadtxt('x_lb3_c%d.csv' % (cam_num), delimiter=',')
+    K = np.loadtxt(os.path.join(calib_dir, 'K_cam%d.csv' % (cam_num)), delimiter=',')
+    x_lb3_c = np.loadtxt(os.path.join(calib_dir,'x_lb3_c%d.csv' % (cam_num)), delimiter=',')
 
     # Other coordinate transforms we need
     x_body_lb3 = [0.035, 0.002, -1.23, -179.93, -0.23, 0.50]
@@ -119,17 +123,18 @@ def project_vel_to_cam(hits, cam_num):
 
 def main(args):
 
-    if len(args)<4:
+    if len(args)<5:
         print  """Incorrect usage.
 
-To use:
+        To use:
 
-   python project_vel_to_cam.py vel img cam_num
+           python project_vel_to_cam.py vel img cam_num
 
-      vel:  The velodyne binary file (timestamp.bin)
-      img:  The undistorted image (timestamp.tiff)
-  cam_num:  The index (0 through 5) of the camera
-"""
+              vel:  The velodyne binary file (timestamp.bin)
+              img:  The undistorted image (timestamp.tiff)
+              calib_dir: Dir containing camera calib files.
+          cam_num:  The index (0 through 5) of the camera
+        """
         return 1
 
 
@@ -139,9 +144,16 @@ To use:
     # Load image
     image = mpimg.imread(args[2])
 
-    cam_num = int(args[3])
+    # Calib dir
+    calib_dir = args[3]
 
-    hits_image = project_vel_to_cam(hits_body, cam_num)
+    if not os.path.isdir(calib_dir):
+        print ('Error, dir %s does not exist!'%calib_dir)
+        sys.exit()
+
+    cam_num = int(args[4])
+
+    hits_image = project_vel_to_cam(hits_body, cam_num, calib_dir)
 
     x_im = hits_image[0, :]/hits_image[2, :]
     y_im = hits_image[1, :]/hits_image[2, :]
